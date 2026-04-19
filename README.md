@@ -6,6 +6,7 @@ This folder contains a deployable Streamlit interface for the DroidSleuth APK ma
 
 - `app.py`: Streamlit entry point
 - `droidsleuth_app/`: modular application code
+- `droidsleuth_layer1/`: bundled runtime analysis package for Streamlit deployment
 - `droidsleuth_best_bundle.pkl`: bundled XGBoost model copied into the app folder for self-contained deployment
 - `.streamlit/config.toml`: theme configuration
 
@@ -44,7 +45,7 @@ streamlit run streamlit\app.py
 
 ## Notes
 
-- The app auto-adds the project `src` directory to `sys.path`, so it can import the local DroidSleuth codebase directly.
+- The app first uses the bundled `droidsleuth_layer1` package inside this folder and falls back to the project `src` layout when available.
 - The app suppresses most Androguard logging to keep the UI clean.
 - The ML prediction shown in the UI is the final saved-model verdict.
 - The rule-based verdict shown in the UI is the internal Layer 2 / 2.5 heuristic output and is included for analyst visibility.

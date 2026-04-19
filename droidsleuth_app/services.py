@@ -9,11 +9,12 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
-from .config import FALLBACK_BUNDLES, SRC_ROOT
+from .config import FALLBACK_BUNDLES, PACKAGE_SEARCH_ROOTS
 
 
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
+for package_root in PACKAGE_SEARCH_ROOTS:
+    if package_root.exists() and str(package_root) not in sys.path:
+        sys.path.insert(0, str(package_root))
 
 from droidsleuth_layer1.apk_parser import ApkAnalyzer  # noqa: E402
 

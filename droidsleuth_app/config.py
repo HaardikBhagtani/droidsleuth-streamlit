@@ -6,12 +6,18 @@ from pathlib import Path
 APP_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = APP_ROOT.parents[0]
 SRC_ROOT = PROJECT_ROOT / "src"
+LOCAL_PACKAGE_ROOT = APP_ROOT
 
 LOCAL_BUNDLE = APP_ROOT / "droidsleuth_best_bundle.pkl"
 FALLBACK_BUNDLES = [
     LOCAL_BUNDLE,
     PROJECT_ROOT / "output_2000_calibrated" / "droidsleuth_best_bundle.pkl",
     PROJECT_ROOT / "output" / "droidsleuth_best_bundle.pkl",
+]
+
+PACKAGE_SEARCH_ROOTS = [
+    LOCAL_PACKAGE_ROOT,
+    SRC_ROOT,
 ]
 
 APP_TITLE = "DroidSleuth"

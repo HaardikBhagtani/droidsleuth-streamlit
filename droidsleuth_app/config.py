@@ -22,8 +22,8 @@ PACKAGE_SEARCH_ROOTS = [
 
 APP_TITLE = "DroidSleuth"
 APP_SUBTITLE = (
-    "Static APK malware triage with resilient parsing, deep static "
-    "signals, signature matching, and a bundled production model."
+    "Five-layer static APK malware triage with resilient parsing, core static "
+    "extraction, deep static analysis, signature matching, and a bundled production model."
 )
 
 ABOUT_STATS = {
@@ -38,9 +38,9 @@ ABOUT_STATS = {
 }
 
 ABOUT_POINTS = [
-    "Static-only APK analysis pipeline with custom resilient parsing.",
-    "Binary AndroidManifest decoding, DEX feature extraction, and layered heuristic scoring.",
-    "Androguard-backed deep-static layer with graph and CFG-derived features.",
-    "Bundled ML model selected from large-scale DroidSleuth evaluation.",
+    "Five-layer static-only APK analysis pipeline with custom resilient parsing.",
+    "Layer 1 recovers APK structure, manifest content, DEX payloads, and archive anomalies.",
+    "Layers 2-4 combine core static extraction, deep-static analysis, and signature-based scoring.",
+    "Layer 5 applies the bundled XGBoost model selected from large-scale DroidSleuth evaluation.",
 ]
 

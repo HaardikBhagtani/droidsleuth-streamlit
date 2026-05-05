@@ -4,6 +4,7 @@ import json
 import logging
 import sys
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 
 import joblib
@@ -92,6 +93,17 @@ def build_row_from_report(report: dict) -> dict:
     return row
 
 
+def build_scored_row(report: dict, ml_label: str, ml_prob: float, ml_confidence: float) -> dict:
+    row = build_row_from_report(report)
+    row["rule_predicted_label"] = row["predicted_label"]
+    row["rule_malicious_probability"] = row["malicious_probability"]
+    row["rule_confidence"] = row["confidence"]
+    row["predicted_label"] = ml_label
+    row["malicious_probability"] = round(ml_prob, 6)
+    row["confidence"] = round(ml_confidence, 6)
+    return row
+
+
 def build_model_frame(row: dict, bundle: dict) -> pd.DataFrame:
     df = pd.DataFrame([row])
     drop_columns = bundle["drop_columns"]
@@ -106,23 +118,38 @@ def build_model_frame(row: dict, bundle: dict) -> pd.DataFrame:
 
 
 def score_report(report: dict, bundle: dict) -> dict:
-    row = build_row_from_report(report)
-    X = build_model_frame(row, bundle)
+    base_row = build_row_from_report(report)
+    X = build_model_frame(base_row, bundle)
     model = bundle["model"]
     ml_pred = int(model.predict(X)[0])
     ml_prob = float(model.predict_proba(X)[0][1])
     ml_label = "malicious" if ml_pred == 1 else "non_malicious"
+    ml_confidence = max(ml_prob, 1 - ml_prob)
+    row = build_scored_row(report, ml_label, ml_prob, ml_confidence)
 
     return {
         "row": row,
         "features_frame": X,
         "label": ml_label,
         "probability": ml_prob,
-        "confidence": max(ml_prob, 1 - ml_prob),
+        "confidence": ml_confidence,
     }
 
 
-def format_report_json(report: dict) -> bytes:
-    return json.dumps(report, indent=2, ensure_ascii=False).encode("utf-8")
+def build_download_payload(report: dict, scored: dict, bundle_path: Path) -> dict:
+    payload = deepcopy(report)
+    payload["saved_model_scoring"] = {
+        "bundle": bundle_path.name,
+        "label": scored["label"],
+        "malicious_probability": round(scored["probability"], 6),
+        "confidence": round(scored["confidence"], 6),
+        "features_frame_columns": list(scored["features_frame"].columns),
+    }
+    payload["export_row"] = scored["row"]
+    return payload
+
+
+def format_report_json(payload: dict) -> bytes:
+    return json.dumps(payload, indent=2, ensure_ascii=False).encode("utf-8")
 
 

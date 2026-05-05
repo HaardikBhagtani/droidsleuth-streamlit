@@ -205,9 +205,10 @@ def render_about_section() -> None:
                 <div class="about-title">About The Tool</div>
                 <div class="about-copy">
                     DroidSleuth is a static Android APK malware analysis tool designed for analyst-facing
-                    triage and thesis-grade evaluation. It combines resilient APK parsing, manifest and DEX
-                    feature extraction, signature matching, deep-static analysis, and a final
-                    XGBoost classifier trained on a balanced 2000-APK dataset.
+                    triage and thesis-grade evaluation. It follows a five-layer architecture:
+                    resilient APK parsing, core static feature extraction, deep static analysis,
+                    signature-based detection, and final XGBoost classification trained on a
+                    balanced 2000-APK dataset.
                 </div>
             </div>
             """,
@@ -240,14 +241,14 @@ def feature_cards(report: dict) -> list[tuple[str, str, str]]:
         ("Permissions", str(features.get("permission_count", 0)), "Declared Android permissions"),
         ("Components", str(features.get("component_count", 0)), "Activities, services, receivers, providers"),
         ("Triage Score", str(features.get("triage_score", 0)), "Structural anomaly score from Layer 1"),
-        ("Signature Score", str(features.get("signature_score", 0)), "Layer 2.5 matched-signature score"),
+        ("Signature Score", str(features.get("signature_score", 0)), "Layer 4 matched-signature score"),
         ("API Hints", str(features.get("high_risk_api_hint_count", 0)), "High-risk static API hint count"),
         ("Family Hints", str(len(classification.get("family_hints", []))), "Static family inferences"),
     ]
 
 
 def deep_static_frame(report: dict) -> pd.DataFrame:
-    features = report.get("layer2_deep_static", {}).get("features", {})
+    features = report.get("layer2", {}).get("features", {})
     ordered = [
         "deep_behavioral_sequence_count",
         "deep_sensitive_api_edge_hits",

@@ -7,6 +7,7 @@ import streamlit as st
 
 from droidsleuth_app.services import (
     analyze_apk_file,
+    build_download_payload,
     format_report_json,
     load_bundle,
     pick_default_bundle,
@@ -48,7 +49,7 @@ def main() -> None:
         st.subheader("About")
         st.caption(
             "Static APK malware triage interface for the bundled DroidSleuth model. "
-            "Use the About tab in the main view for architecture and evaluation details."
+            "Use the About tab in the main view for five-layer architecture and evaluation details."
         )
     bundle_path = Path(default_bundle)
 
@@ -64,7 +65,7 @@ def main() -> None:
                 """
                 <div class="callout">
                     Upload an APK to generate a full static report, run the saved ML bundle, and review
-                    both the rule-based and model-based verdicts in one place.
+                    both the Layer 1-4 rule-based signals and the Layer 5 saved-model verdict in one place.
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -76,6 +77,7 @@ def main() -> None:
             bundle = load_bundle(bundle_path)
             report = analyze_apk_file(uploaded_apk.getvalue(), uploaded_apk.name)
             scored = score_report(report, bundle)
+            download_payload = build_download_payload(report, scored, bundle_path)
 
         classification = report["layer2"]["classification"]
         ml_label = scored["label"]
@@ -93,11 +95,11 @@ def main() -> None:
             render_metric_card(
                 "Rule Verdict",
                 classification["label"].replace("_", " ").title(),
-                "Layer 2 / 2.5 heuristic verdict",
+                "Layers 1-4 heuristic verdict",
                 "warning" if classification["label"] == "malicious" else "neutral",
             )
         with top_metrics[3]:
-            render_metric_card("Model Confidence", f"{ml_confidence:.1%}", "Distance from the decision boundary", "neutral")
+            render_metric_card("Model Confidence", f"{ml_confidence:.1%}", "Confidence in the saved-model prediction", "neutral")
 
         st.markdown('<div class="section-label">Feature Snapshot</div>', unsafe_allow_html=True)
         feature_cols = st.columns(3)
@@ -109,13 +111,19 @@ def main() -> None:
         left, right = st.columns([1.15, 0.85], gap="large")
 
         with left:
-            st.markdown('<div class="section-label">Why The APK Was Flagged</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-label">Rule-Based Findings</div>', unsafe_allow_html=True)
             reasons = classification.get("reasons", [])
             if reasons:
                 for reason in reasons:
                     st.markdown(f"- {reason}")
             else:
                 st.write("No rule-based reasons were returned.")
+
+            if ml_label != classification["label"]:
+                st.info(
+                    "The saved XGBoost bundle overrode the rule-based verdict for this sample after "
+                    "scoring the full fused 42-feature vector."
+                )
 
             st.markdown('<div class="section-label">Static Tags</div>', unsafe_allow_html=True)
             tags = (
@@ -143,12 +151,12 @@ def main() -> None:
             if rule_ids:
                 st.dataframe(pd.DataFrame({"Rule ID": rule_ids}), use_container_width=True, hide_index=True)
             else:
-                st.caption("No Layer 2.5 signatures matched.")
+                st.caption("No Layer 4 signatures matched.")
 
             st.markdown('<div class="section-label">Download Report</div>', unsafe_allow_html=True)
             st.download_button(
                 "Download JSON analysis",
-                data=format_report_json(report),
+                data=format_report_json(download_payload),
                 file_name=f"{Path(uploaded_apk.name).stem}_droidsleuth_report.json",
                 mime="application/json",
                 use_container_width=True,

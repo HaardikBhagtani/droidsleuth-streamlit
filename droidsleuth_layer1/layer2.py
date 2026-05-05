@@ -347,7 +347,7 @@ def build_layer2_assessment(
         reasons.append("static C2 extraction found suspicious or obfuscated network indicators")
     if signature_score >= 30:
         malicious_score += min(16, max(6, signature_score // 6))
-        reasons.append("Layer 2.5 signature engine matched malware-oriented patterns")
+        reasons.append("Layer 4 signature engine matched malware-oriented patterns")
     elif signature_score >= 15 and (
         unsupported_method_count
         or behavior_sequences
@@ -357,7 +357,7 @@ def build_layer2_assessment(
         or family_hints_from_engine
     ):
         malicious_score += 5
-        reasons.append("Layer 2.5 signatures reinforce other suspicious static evidence")
+        reasons.append("Layer 4 signatures reinforce other suspicious static evidence")
     if family_hints_from_engine:
         family_hints.extend(family_hints_from_engine)
         backed_family_context = bool(

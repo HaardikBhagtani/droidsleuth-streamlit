@@ -5,15 +5,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from droidsleuth_app.services import (
-    analyze_apk_file,
-    build_download_payload,
-    format_report_json,
-    load_bundle,
-    pick_default_bundle,
-    score_report,
-    suppress_noisy_logs,
-)
+from droidsleuth_app import services as app_services
 from droidsleuth_app.ui import (
     apk_overview_frame,
     deep_static_frame,
@@ -24,6 +16,14 @@ from droidsleuth_app.ui import (
     render_hero,
     render_metric_card,
 )
+
+analyze_apk_file = app_services.analyze_apk_file
+format_report_json = app_services.format_report_json
+load_bundle = app_services.load_bundle
+pick_default_bundle = app_services.pick_default_bundle
+score_report = app_services.score_report
+suppress_noisy_logs = app_services.suppress_noisy_logs
+build_download_payload = getattr(app_services, "build_download_payload", None)
 
 
 def main() -> None:
@@ -77,7 +77,11 @@ def main() -> None:
             bundle = load_bundle(bundle_path)
             report = analyze_apk_file(uploaded_apk.getvalue(), uploaded_apk.name)
             scored = score_report(report, bundle)
-            download_payload = build_download_payload(report, scored, bundle_path)
+            if build_download_payload is not None:
+                download_payload = build_download_payload(report, scored, bundle_path)
+            else:
+                # Backward-compatible fallback for deployments where services.py updates lag behind app.py.
+                download_payload = report
 
         classification = report["layer2"]["classification"]
         ml_label = scored["label"]
